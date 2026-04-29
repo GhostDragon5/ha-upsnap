@@ -2,8 +2,23 @@
   "config": {
     "step": {
       "user": {
-        "title": "UpSnap"
+        "title": "Connect to UpSnap",
+        "description": "Enter your UpSnap instance details.",
+        "data": {
+          "url": "UpSnap URL",
+          "username": "Username / Email",
+          "password": "Password",
+          "verify_ssl": "Verify SSL certificate"
+        }
       }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This UpSnap instance is already configured"
     }
   }
 }

@@ -41,15 +41,12 @@ class UpSnapOnlineBinarySensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         device = self.coordinator.data.get(self._device_id, {})
-        for key in ("status", "state", "online"):
-            if key in device:
-                value = device.get(key)
-                if isinstance(value, str):
-                    return value.strip().lower() in ONLINE_STATES
-                return value in ONLINE_STATES
-        return False
+        value = device.get("status")
+        if isinstance(value, str):
+            return value.strip().lower() in ONLINE_STATES
+        return value in ONLINE_STATES
 
     @property
     def extra_state_attributes(self) -> dict:
         device = self.coordinator.data.get(self._device_id, {})
-        return {key: device[key] for key in ("status", "state", "online", "mac", "ip", "hostname", "created", "updated") if key in device}
+        return {key: device[key] for key in ("status", "mac", "ip", "name", "created", "updated") if key in device}
