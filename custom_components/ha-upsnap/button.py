@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, Self
+
 from dataclasses import dataclass
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
@@ -58,11 +60,19 @@ async def async_setup_entry(
     coordinator = data["coordinator"]
     api = data["api"]
 
-    entities = [
-        UpSnapActionButton(coordinator, api, entry, device, description)
-        for device in coordinator.data.values()
-        for description in BUTTONS
-    ]
+    entities: list[Self] = []
+
+    for device in coordinator.data.values():
+        for description in BUTTONS:
+            entities.append(
+                UpSnapActionButton(
+                    coordinator=coordinator,
+                    api=api,
+                    entry=entry,
+                    device=device,
+                    description=description,
+                )
+            )
 
     async_add_entities(entities)
 
@@ -71,7 +81,14 @@ class UpSnapActionButton(CoordinatorEntity, ButtonEntity):
     entity_description: UpSnapButtonEntityDescription
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, api, entry, device, description: UpSnapButtonEntityDescription) -> None:
+    def __init__(
+        self,
+        coordinator,
+        api,
+        entry: ConfigEntry,
+        device: dict[Any, Any],
+        description: UpSnapButtonEntityDescription,
+    ) -> None:
         super().__init__(coordinator)
         self._api = api
         self._entry = entry
