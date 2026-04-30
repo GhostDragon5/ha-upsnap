@@ -1,0 +1,50 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit UpSnap verbinden",
+        "description": "Gib die Daten deiner UpSnap‑Instanz ein.",
+        "data": {
+          "url": "UpSnap‑Adresse (z.B. http://192.168.1.8:8090)",
+          "username": "Benutzername oder E‑Mail",
+          "password": "Passwort",
+          "verify_ssl": "SSL‑Zertifikat prüfen"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung konnte nicht hergestellt werden",
+      "invalid_auth": "Anmeldeinformationen ungültig",
+      "unknown": "Unbekannter Fehler"
+    },
+    "abort": {
+      "already_configured": "Diese UpSnap‑Instanz ist bereits konfiguriert"
+    }
+  },
+  "entity": {
+    "button": {
+      "wake": {
+        "name": "Aufwecken",
+        "description": "Sendet ein Wake‑on‑LAN‑Signal an das Gerät."
+      },
+      "shutdown": {
+        "name": "Herunterfahren",
+        "description": "Lässt das Gerät über UpSnap herunterfahren."
+      },
+      "reboot": {
+        "name": "Neu starten",
+        "description": "Lässt das Gerät über UpSnap neu starten."
+      },
+      "sleep": {
+        "name": "Ruhezustand",
+        "description": "Lässt das Gerät in den Ruhezustand übergehen."
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online",
+        "device_class": "Verbindung"
+      }
+    }
+  }
+}

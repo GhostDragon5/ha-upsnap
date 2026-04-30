@@ -5,8 +5,8 @@
         "title": "Connect to UpSnap",
         "description": "Enter your UpSnap instance details.",
         "data": {
-          "url": "UpSnap URL",
-          "username": "Username / Email",
+          "url": "UpSnap URL (for example http://192.168.1.8:8090)",
+          "username": "Username or email",
           "password": "Password",
           "verify_ssl": "Verify SSL certificate"
         }
@@ -15,10 +15,36 @@
     "error": {
       "cannot_connect": "Failed to connect",
       "invalid_auth": "Invalid authentication",
-      "unknown": "Unexpected error"
+      "unknown": "Unknown error"
     },
     "abort": {
       "already_configured": "This UpSnap instance is already configured"
+    }
+  },
+  "entity": {
+    "button": {
+      "wake": {
+        "name": "Wake",
+        "description": "Sends a Wake-on-LAN signal to the device."
+      },
+      "shutdown": {
+        "name": "Shutdown",
+        "description": "Shuts down the device through UpSnap."
+      },
+      "reboot": {
+        "name": "Reboot",
+        "description": "Reboots the device through UpSnap."
+      },
+      "sleep": {
+        "name": "Sleep",
+        "description": "Puts the device into sleep mode."
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online",
+        "device_class": "connectivity"
+      }
     }
   }
 }
