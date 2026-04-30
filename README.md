@@ -89,21 +89,6 @@ Home Assistant may create entities similar to:
 - `button.device_sleep`
 - `binary_sensor.device_online`
 
-## Troubleshooting
-
-If the integration does not load correctly:
-
-1. Check the Home Assistant logs.
-2. Verify that `__init__.py` exists inside `/config/custom_components/upsnap/`.
-3. Remove Python cache files:
-
-   ```bash
-   rm -rf /config/custom_components/upsnap/__pycache__
-   find /config/custom_components/upsnap -name "*.pyc" -delete
-   ```
-
-4. Restart Home Assistant again.
-
 ## Notes
 
 - This integration uses the UpSnap REST API.
