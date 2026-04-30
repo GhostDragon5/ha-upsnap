@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
 from .const import DOMAIN
 
 
@@ -26,14 +28,29 @@ BUTTONS = [
 ]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator = data["coordinator"]
     api = data["api"]
+
     entities = []
+
     for device in coordinator.data.values():
         for description in BUTTONS:
-            entities.append(UpSnapActionButton(coordinator, api, entry, device, description))
+            entities.append(
+                UpSnapActionButton(
+                    coordinator=coordinator,
+                    api=api,
+                    entry=entry,
+                    device=device,
+                    description=description,
+                )
+            )
+
     async_add_entities(entities)
 
 
@@ -45,6 +62,7 @@ class UpSnapActionButton(CoordinatorEntity, ButtonEntity):
         self._device_id = device["id"]
         self._device_name = device.get("name") or device.get("hostname") or self._device_id
         self.entity_description = description
+
         self._attr_name = f"{self._device_name} {description.name}"
         self._attr_unique_id = f"{entry.entry_id}_{self._device_id}_{description.key}"
         self._attr_icon = description.icon
