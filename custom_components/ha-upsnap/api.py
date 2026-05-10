@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
+
 import aiohttp
+from aiohttp import ClientError, ClientResponse, ClientSession
 
 
 class UpSnapApiError(Exception):
@@ -17,33 +19,51 @@ class UpSnapConnectionError(UpSnapApiError):
 
 
 class UpSnapApiClient:
-    def __init__(self, base_url: str, username: str, password: str, verify_ssl: bool = True) -> None:
+    _session: ClientSession | None = None
+
+    def __init__(
+        self,
+        base_url: str,
+        username: str,
+        password: str,
+        verify_ssl: bool = True,
+    ) -> None:
         self._base_url = base_url.rstrip("/")
         self._username = username
         self._password = password
         self._verify_ssl = verify_ssl
         self._token: str | None = None
 
+    async def _get_session(self) -> ClientSession:
+        if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(ssl=self._verify_ssl)
+            self._session = aiohttp.ClientSession(connector=connector)
+        return self._session
+
+    async def close(self) -> None:
+        if self._session and not self._session.closed:
+            await self._session.close()
+            self._session = None
+
     async def authenticate(self) -> None:
         payload = {"identity": self._username, "password": self._password}
         try:
-            connector = aiohttp.TCPConnector(ssl=self._verify_ssl)
-            async with aiohttp.ClientSession(connector=connector) as session:
-                async with session.post(
-                    f"{self._base_url}/api/collections/users/auth-with-password",
-                    json=payload,
-                ) as response:
-                    if response.status in (401, 403):
-                        raise UpSnapAuthError("Invalid credentials")
-                    response.raise_for_status()
-                    data = await response.json()
-                    self._token = data["token"]
+            session = await self._get_session()
+            async with session.post(
+                f"{self._base_url}/api/collections/users/auth-with-password",
+                json=payload,
+            ) as response:
+                if response.status in (401, 403):
+                    raise UpSnapAuthError("Invalid credentials")
+                response.raise_for_status()
+                data = await response.json()
+                self._token = data["token"]
         except UpSnapAuthError:
             raise
-        except aiohttp.ClientError as err:
+        except ClientError as err:
             raise UpSnapConnectionError(str(err)) from err
 
-    async def _decode_response(self, response: aiohttp.ClientResponse) -> Any:
+    async def _decode_response(self, response: ClientResponse) -> Any:
         if "application/json" in response.headers.get("Content-Type", ""):
             return await response.json()
         return await response.text()
@@ -53,24 +73,27 @@ class UpSnapApiClient:
             await self.authenticate()
         headers = {"Authorization": f"Bearer {self._token}"}
         try:
-            connector = aiohttp.TCPConnector(ssl=self._verify_ssl)
-            async with aiohttp.ClientSession(connector=connector) as session:
-                async with session.request(method, f"{self._base_url}{path}", headers=headers) as response:
-                    if response.status == 401:
-                        await self.authenticate()
-                        headers = {"Authorization": f"Bearer {self._token}"}
-                        async with session.request(method, f"{self._base_url}{path}", headers=headers) as retry:
-                            if retry.status in (401, 403):
-                                raise UpSnapAuthError("Re-authentication failed")
-                            retry.raise_for_status()
-                            return await self._decode_response(retry)
-                    if response.status in (401, 403):
-                        raise UpSnapAuthError("Unauthorized")
-                    response.raise_for_status()
-                    return await self._decode_response(response)
+            session = await self._get_session()
+            async with session.request(
+                method, f"{self._base_url}{path}", headers=headers
+            ) as response:
+                if response.status == 401:
+                    await self.authenticate()
+                    headers = {"Authorization": f"Bearer {self._token}"}
+                    async with session.request(
+                        method, f"{self._base_url}{path}", headers=headers
+                    ) as retry:
+                        if retry.status in (401, 403):
+                            raise UpSnapAuthError("Re-authentication failed")
+                        retry.raise_for_status()
+                        return await self._decode_response(retry)
+                if response.status in (401, 403):
+                    raise UpSnapAuthError("Unauthorized")
+                response.raise_for_status()
+                return await self._decode_response(response)
         except UpSnapApiError:
             raise
-        except aiohttp.ClientError as err:
+        except ClientError as err:
             raise UpSnapConnectionError(str(err)) from err
 
     async def test_connection(self) -> None:

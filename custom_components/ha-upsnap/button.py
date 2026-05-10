@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from typing import Any, Self
-
-from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .api import UpSnapApiClient, UpSnapAuthError, UpSnapConnectionError
 from .const import DOMAIN
+from .coordinator import UpSnapDataUpdateCoordinator
 
 
-@dataclass(frozen=True, kw_only=True)
-class UpSnapButtonEntityDescription(ButtonEntityDescription):
+class UpSnapButtonEntityDescription(ButtonEntityDescription, frozen=True, kw_only=True):
     method: str
 
 
@@ -60,7 +60,7 @@ async def async_setup_entry(
     coordinator = data["coordinator"]
     api = data["api"]
 
-    entities: list[Self] = []
+    entities: list[UpSnapActionButton] = []
 
     for device in coordinator.data.values():
         for description in BUTTONS:
@@ -77,16 +77,16 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class UpSnapActionButton(CoordinatorEntity, ButtonEntity):
+class UpSnapActionButton(CoordinatorEntity[dict[str, Any]], ButtonEntity):
     entity_description: UpSnapButtonEntityDescription
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator,
-        api,
+        coordinator: UpSnapDataUpdateCoordinator,
+        api: UpSnapApiClient,
         entry: ConfigEntry,
-        device: dict[Any, Any],
+        device: dict[str, Any],
         description: UpSnapButtonEntityDescription,
     ) -> None:
         super().__init__(coordinator)
@@ -114,5 +114,13 @@ class UpSnapActionButton(CoordinatorEntity, ButtonEntity):
         return self._device_id in self.coordinator.data
 
     async def async_press(self) -> None:
-        await getattr(self._api, self.entity_description.method)(self._device_id)
-        await self.coordinator.async_request_refresh()
+        try:
+            await getattr(self._api, self.entity_description.method)(self._device_id)
+        except UpSnapAuthError as err:
+            raise HomeAssistantError("Authentication failed. Please reconfigure UpSnap.") from err
+        except UpSnapConnectionError as err:
+            raise HomeAssistantError(f"Could not connect to UpSnap: {err}") from err
+        except Exception as err:
+            raise HomeAssistantError(f"Failed to execute action: {err}") from err
+        finally:
+            await self.coordinator.async_request_refresh()

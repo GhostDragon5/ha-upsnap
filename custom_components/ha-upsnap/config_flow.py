@@ -16,7 +16,10 @@ async def validate_input(data: dict[str, Any]) -> dict[str, Any]:
         data[CONF_PASSWORD],
         data[CONF_VERIFY_SSL],
     )
-    await api.test_connection()
+    try:
+        await api.test_connection()
+    finally:
+        await api.close()
     return {"title": f"UpSnap ({data[CONF_URL].rstrip('/')})"}
 
 
