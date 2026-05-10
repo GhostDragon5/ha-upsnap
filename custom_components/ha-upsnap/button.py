@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from dataclasses import dataclass
+
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -15,7 +17,8 @@ from .const import DOMAIN
 from .coordinator import UpSnapDataUpdateCoordinator
 
 
-class UpSnapButtonEntityDescription(ButtonEntityDescription, frozen=True, kw_only=True):
+@dataclass(frozen=True, kw_only=True)
+class UpSnapButtonEntityDescription(ButtonEntityDescription):
     method: str
 
 
